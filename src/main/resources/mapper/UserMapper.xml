@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+=========================================
+UserMapper XML
+=========================================
+
+사용자(User) 테이블에 대한 SQL 쿼리를 정의합니다.
+
+namespace: 이 매퍼와 연결될 Java 인터페이스의 전체 경로
+-->
+<mapper namespace="com.happyandnavi.mapper.UserMapper">
+
+    <!--
+    ========================================
+    ResultMap 정의
+    ========================================
+    DB 컬럼명과 Java 필드명 매핑 (snake_case -> camelCase)
+    -->
+    <resultMap id="UserResultMap" type="com.happyandnavi.domain.User">
+        <!-- PK 컬럼 -->
+        <id property="userId" column="user_id"/>
+        <!-- 일반 컬럼 -->
+        <result property="email" column="email"/>
+        <result property="password" column="password"/>
+        <result property="phone" column="phone"/>
+        <result property="userName" column="user_name"/>
+        <result property="scheduleSet" column="schedule_set"/>
+        <result property="signupType" column="signup_type"/>
+        <result property="role" column="role"/>
+        <result property="socialId" column="social_id"/>
+        <result property="refreshToken" column="refresh_token"/>
+        <result property="status" column="status"/>
+        <result property="regDate" column="reg_date"/>
+        <result property="modDate" column="mod_date"/>
+    </resultMap>
+
+    <!--
+    ========================================
+    SQL 조각 정의 (재사용 가능한 SQL)
+    ========================================
+    -->
+    
+    <!-- 기본 SELECT 컬럼 목록 -->
+    <sql id="baseColumns">
+        user_id, email, password, phone, user_name,
+        schedule_set, signup_type, role, social_id, refresh_token,
+        status, reg_date, mod_date
+    </sql>
+    
+    <!-- 활성 사용자 조건 (status = 1) -->
+    <sql id="activeCondition">
+        status = 1
+    </sql>
+
+    <!--
+    ========================================
+    CREATE (등록)
+    ========================================
+    -->
+    
+    <!--
+    새로운 사용자 등록
+    useGeneratedKeys: AUTO_INCREMENT로 생성된 키를 반환
+    keyProperty: 생성된 키를 저장할 객체의 필드명
+    -->
+    <insert id="insert" parameterType="com.happyandnavi.domain.User"
+            useGeneratedKeys="true" keyProperty="userId">
+        INSERT INTO users (
+            email,
+            password,
+            phone,
+            user_name,
+            schedule_set,
+            signup_type,
+            role,
+            social_id,
+            refresh_token,
+            status
+        ) VALUES (
+            #{email},
+            #{password},
+            #{phone},
+            #{userName},
+            #{scheduleSet},
+            #{signupType},
+            #{role},
+            #{socialId},
+            #{refreshToken},
+            #{status}
+        )
+    </insert>
+
+    <!--
+    ========================================
+    READ (조회)
+    ========================================
+    -->
+    
+    <!-- 사용자 ID로 조회 (활성 사용자만) -->
+    <select id="findById" resultMap="UserResultMap">
+        SELECT <include refid="baseColumns"/>
+        FROM users
+        WHERE user_id = #{userId}
+          AND <include refid="activeCondition"/>
+    </select>
+    
+    <!-- 이메일로 조회 (로그인용) -->
+    <select id="findByEmail" resultMap="UserResultMap">
+        SELECT <include refid="baseColumns"/>
+        FROM users
+        WHERE email = #{email}
+          AND <include refid="activeCondition"/>
+    </select>
+    
+    <!-- 소셜 로그인 ID로 조회 -->
+    <select id="findBySocialIdAndSignupType" resultMap="UserResultMap">
+        SELECT <include refid="baseColumns"/>
+        FROM users
+        WHERE social_id = #{socialId}
+          AND signup_type = #{signupType}
+          AND <include refid="activeCondition"/>
+    </select>
+    
+    <!-- 연락처로 조회 (이메일 찾기용) -->
+    <select id="findByPhone" resultMap="UserResultMap">
+        SELECT <include refid="baseColumns"/>
+        FROM users
+        WHERE phone = #{phone}
+          AND <include refid="activeCondition"/>
+    </select>
+    
+    <!-- 이메일 중복 확인 -->
+    <select id="existsByEmail" resultType="int">
+        SELECT COUNT(*)
+        FROM users
+        WHERE email = #{email}
+          AND <include refid="activeCondition"/>
+    </select>
+    
+    <!-- 연락처 중복 확인 -->
+    <select id="existsByPhone" resultType="int">
+        SELECT COUNT(*)
+        FROM users
+        WHERE phone = #{phone}
+          AND <include refid="activeCondition"/>
+    </select>
+
+    <!--
+    ========================================
+    UPDATE (수정)
+    ========================================
+    -->
+    
+    <!--
+    사용자 정보 수정
+    동적 SQL을 사용하여 null이 아닌 필드만 업데이트
+    -->
+    <update id="update" parameterType="com.happyandnavi.domain.User">
+        UPDATE users
+        <set>
+            <!-- null이 아닌 필드만 업데이트 -->
+            <if test="email != null">email = #{email},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="userName != null">user_name = #{userName},</if>
+            <if test="scheduleSet != null">schedule_set = #{scheduleSet},</if>
+            <if test="role != null">role = #{role},</if>
+        </set>
+        WHERE user_id = #{userId}
+          AND <include refid="activeCondition"/>
+    </update>
+    
+    <!-- 비밀번호 변경 -->
+    <update id="updatePassword">
+        UPDATE users
+        SET password = #{password}
+        WHERE user_id = #{userId}
+          AND <include refid="activeCondition"/>
+    </update>
+    
+    <!-- Refresh Token 업데이트 -->
+    <update id="updateRefreshToken">
+        UPDATE users
+        SET refresh_token = #{refreshToken}
+        WHERE user_id = #{userId}
+          AND <include refid="activeCondition"/>
+    </update>
+    
+    <!-- 알림 설정 변경 -->
+    <update id="updateScheduleSet">
+        UPDATE users
+        SET schedule_set = #{scheduleSet}
+        WHERE user_id = #{userId}
+          AND <include refid="activeCondition"/>
+    </update>
+
+    <!--
+    ========================================
+    DELETE (삭제)
+    ========================================
+    -->
+    
+    <!-- 논리적 삭제 (status를 0으로 변경) -->
+    <update id="deleteById">
+        UPDATE users
+        SET status = 0
+        WHERE user_id = #{userId}
+    </update>
+    
+    <!-- 물리적 삭제 (실제 데이터 삭제) -->
+    <delete id="hardDeleteById">
+        DELETE FROM users
+        WHERE user_id = #{userId}
+    </delete>
+
+</mapper>

@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+=========================================
+MemoryMapper XML
+=========================================
+
+추억일기(Memory) 테이블에 대한 SQL 쿼리를 정의합니다.
+-->
+<mapper namespace="com.happyandnavi.mapper.MemoryMapper">
+
+    <!--
+    ========================================
+    ResultMap 정의
+    ========================================
+    -->
+    <resultMap id="MemoryResultMap" type="com.happyandnavi.domain.Memory">
+        <id property="memoryId" column="memory_id"/>
+        <result property="memoryDate" column="memory_date"/>
+        <result property="memoryPath" column="memory_path"/>
+        <result property="memoryComment" column="memory_comment"/>
+        <result property="memoryWeather" column="memory_weather"/>
+        <result property="userMood" column="user_mood"/>
+        <result property="petMood" column="pet_mood"/>
+        <result property="userId" column="user_id"/>
+        <result property="status" column="status"/>
+        <result property="regDate" column="reg_date"/>
+        <result property="modDate" column="mod_date"/>
+    </resultMap>
+
+    <!--
+    ========================================
+    SQL 조각 정의
+    ========================================
+    -->
+    <sql id="baseColumns">
+        memory_id, memory_date, memory_path, memory_comment,
+        memory_weather, user_mood, pet_mood, user_id,
+        status, reg_date, mod_date
+    </sql>
+    
+    <sql id="activeCondition">
+        status = 1
+    </sql>
+
+    <!--
+    ========================================
+    CREATE (등록)
+    ========================================
+    -->
+    <insert id="insert" parameterType="com.happyandnavi.domain.Memory"
+            useGeneratedKeys="true" keyProperty="memoryId">
+        INSERT INTO memory (
+            memory_date,
+            memory_path,
+            memory_comment,
+            memory_weather,
+            user_mood,
+            pet_mood,
+            user_id,
+            status
+        ) VALUES (
+            #{memoryDate},
+            #{memoryPath},
+            #{memoryComment},
+            #{memoryWeather},
+            #{userMood},
+            #{petMood},
+            #{userId},
+            #{status}
+        )
+    </insert>
+
+    <!--
+    ========================================
+    READ (조회)
+    ========================================
+    -->
+    
+    <!-- ID로 조회 -->
+    <select id="findById" resultMap="MemoryResultMap">
+        SELECT <include refid="baseColumns"/>
+        FROM memory
+        WHERE memory_id = #{memoryId}
+          AND <include refid="activeCondition"/>
+    </select>
+    
+    <!-- 사용자 ID + 날짜로 조회 -->
+    <select id="findByUserIdAndDate" resultMap="MemoryResultMap">
+        SELECT <include refid="baseColumns"/>
+        FROM memory
+        WHERE user_id = #{userId}
+          AND memory_date = #{memoryDate}
+          AND <include refid="activeCondition"/>
+    </select>
+    
+    <!-- 사용자의 모든 추억일기 조회 (최신순) -->
+    <select id="findAllByUserId" resultMap="MemoryResultMap">
+        SELECT <include refid="baseColumns"/>
+        FROM memory
+        WHERE user_id = #{userId}
+          AND <include refid="activeCondition"/>
+        ORDER BY memory_date DESC
+    </select>
+    
+    <!-- 연월 기준 조회 (캘린더용) -->
+    <select id="findByUserIdAndYearMonth" resultMap="MemoryResultMap">
+        SELECT <include refid="baseColumns"/>
+        FROM memory
+        WHERE user_id = #{userId}
+          AND YEAR(memory_date) = #{year}
+          AND MONTH(memory_date) = #{month}
+          AND <include refid="activeCondition"/>
+        ORDER BY memory_date ASC
+    </select>
+    
+    <!-- 연도 기준 조회 -->
+    <select id="findByUserIdAndYear" resultMap="MemoryResultMap">
+        SELECT <include refid="baseColumns"/>
+        FROM memory
+        WHERE user_id = #{userId}
+          AND YEAR(memory_date) = #{year}
+          AND <include refid="activeCondition"/>
+        ORDER BY memory_date ASC
+    </select>
+    
+    <!-- 페이징 조회 -->
+    <select id="findByUserIdWithPaging" resultMap="MemoryResultMap">
+        SELECT <include refid="baseColumns"/>
+        FROM memory
+        WHERE user_id = #{userId}
+          AND <include refid="activeCondition"/>
+        ORDER BY memory_date DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+    
+    <!-- 총 개수 조회 -->
+    <select id="countByUserId" resultType="long">
+        SELECT COUNT(*)
+        FROM memory
+        WHERE user_id = #{userId}
+          AND <include refid="activeCondition"/>
+    </select>
+    
+    <!-- 연월별 개수 조회 -->
+    <select id="countByUserIdAndYearMonth" resultType="long">
+        SELECT COUNT(*)
+        FROM memory
+        WHERE user_id = #{userId}
+          AND YEAR(memory_date) = #{year}
+          AND MONTH(memory_date) = #{month}
+          AND <include refid="activeCondition"/>
+    </select>
+    
+    <!-- 날짜 중복 확인 -->
+    <select id="existsByUserIdAndDate" resultType="int">
+        SELECT COUNT(*)
+        FROM memory
+        WHERE user_id = #{userId}
+          AND memory_date = #{memoryDate}
+          AND <include refid="activeCondition"/>
+    </select>
+    
+    <!-- 코멘트 검색 -->
+    <select id="searchByComment" resultMap="MemoryResultMap">
+        SELECT <include refid="baseColumns"/>
+        FROM memory
+        WHERE user_id = #{userId}
+          AND memory_comment LIKE CONCAT('%', #{keyword}, '%')
+          AND <include refid="activeCondition"/>
+        ORDER BY memory_date DESC
+    </select>
+
+    <!--
+    ========================================
+    UPDATE (수정)
+    ========================================
+    -->
+    <update id="update" parameterType="com.happyandnavi.domain.Memory">
+        UPDATE memory
+        <set>
+            <if test="memoryDate != null">memory_date = #{memoryDate},</if>
+            <if test="memoryPath != null">memory_path = #{memoryPath},</if>
+            <if test="memoryComment != null">memory_comment = #{memoryComment},</if>
+            <if test="memoryWeather != null">memory_weather = #{memoryWeather},</if>
+            <if test="userMood != null">user_mood = #{userMood},</if>
+            <if test="petMood != null">pet_mood = #{petMood},</if>
+        </set>
+        WHERE memory_id = #{memoryId}
+          AND <include refid="activeCondition"/>
+    </update>
+    
+    <!-- 이미지 경로만 수정 -->
+    <update id="updateMemoryPath">
+        UPDATE memory
+        SET memory_path = #{memoryPath}
+        WHERE memory_id = #{memoryId}
+          AND <include refid="activeCondition"/>
+    </update>
+
+    <!--
+    ========================================
+    DELETE (삭제)
+    ========================================
+    -->
+    <update id="deleteById">
+        UPDATE memory
+        SET status = 0
+        WHERE memory_id = #{memoryId}
+    </update>
+    
+    <update id="deleteAllByUserId">
+        UPDATE memory
+        SET status = 0
+        WHERE user_id = #{userId}
+    </update>
+
+</mapper>

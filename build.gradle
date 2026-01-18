@@ -1,0 +1,134 @@
+/*
+ * =========================================
+ * 해피야나비야 백엔드 프로젝트 - Gradle 빌드 설정
+ * =========================================
+ * 
+ * 이 파일은 프로젝트의 의존성과 빌드 설정을 정의합니다.
+ * Spring Boot 3.x + Java 17 + MyBatis 조합으로 구성되어 있습니다.
+ */
+
+plugins {
+    // Spring Boot 플러그인 - 스프링 부트 애플리케이션 빌드 및 실행 지원
+    id 'org.springframework.boot' version '3.2.0'
+    
+    // 의존성 관리 플러그인 - Spring Boot BOM(Bill of Materials)을 통한 버전 관리
+    id 'io.spring.dependency-management' version '1.1.4'
+    
+    // Java 플러그인 - Java 컴파일 및 테스트 지원
+    id 'java'
+}
+
+// 프로젝트 기본 정보
+group = 'com.happyandnavi'      // 그룹 ID (패키지 구조의 기반)
+version = '0.0.1-SNAPSHOT'       // 프로젝트 버전
+
+// Java 버전 설정 - Java 17 사용
+java {
+    sourceCompatibility = '17'
+    targetCompatibility = '17'
+}
+
+// Lombok 어노테이션 프로세서 설정
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+// 의존성 다운로드 저장소 설정
+repositories {
+    mavenCentral()  // Maven 중앙 저장소 사용
+}
+
+// 프로젝트 의존성 정의
+dependencies {
+    // ========================================
+    // [1] Spring Boot 핵심 의존성
+    // ========================================
+    
+    // Spring Boot Web - REST API 개발을 위한 웹 스타터
+    // 내장 Tomcat, Spring MVC, JSON 변환 등 포함
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    
+    // Spring Boot Validation - 요청 데이터 유효성 검사
+    // @Valid, @NotNull, @Size 등의 어노테이션 사용 가능
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    
+    // Spring Boot Security - 인증/인가 보안 기능
+    // JWT와 함께 사용하여 API 보안 처리
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    
+    // ========================================
+    // [2] 데이터베이스 관련 의존성
+    // ========================================
+    
+    // MyBatis Spring Boot Starter - MyBatis ORM 프레임워크
+    // SQL 매퍼를 통한 데이터베이스 연동
+    implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3'
+    
+    // MySQL Connector - MySQL 데이터베이스 JDBC 드라이버
+    runtimeOnly 'com.mysql:mysql-connector-j'
+    
+    // ========================================
+    // [3] JWT(JSON Web Token) 관련 의존성
+    // ========================================
+    // JJWT - JWT 생성, 파싱, 검증을 위한 라이브러리
+    
+    // JWT API - JWT 인터페이스 정의
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
+    
+    // JWT 구현체 - 런타임에 실제 JWT 처리 수행
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
+    
+    // JWT Jackson 바인딩 - JSON 직렬화/역직렬화 지원
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
+    
+    // ========================================
+    // [4] 유틸리티 의존성
+    // ========================================
+    
+    // Lombok - 보일러플레이트 코드 자동 생성
+    // @Getter, @Setter, @Builder 등의 어노테이션 제공
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    
+    // ========================================
+    // [5] 소셜 로그인 관련 의존성
+    // ========================================
+    
+    // OAuth2 Client - 카카오, 구글 등 소셜 로그인 지원
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+    
+    // ========================================
+    // [6] 파일 업로드 관련 의존성
+    // ========================================
+    
+    // Apache Commons IO - 파일 처리 유틸리티
+    implementation 'commons-io:commons-io:2.15.1'
+    
+    // ========================================
+    // [7] 개발 및 테스트 의존성
+    // ========================================
+    
+    // Spring Boot DevTools - 개발 시 자동 재시작, 라이브 리로드 등 지원
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    
+    // Spring Boot Test - 테스트 프레임워크
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    
+    // Spring Security Test - 보안 관련 테스트 지원
+    testImplementation 'org.springframework.security:spring-security-test'
+    
+    // MyBatis Test - MyBatis 매퍼 테스트 지원
+    testImplementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter-test:3.0.3'
+}
+
+// 테스트 설정
+tasks.named('test') {
+    useJUnitPlatform()  // JUnit 5 플랫폼 사용
+}
+
+// 빌드 시 인코딩 설정
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}

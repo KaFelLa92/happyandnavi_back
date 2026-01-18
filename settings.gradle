@@ -1,0 +1,5 @@
+/*
+ * Gradle 설정 파일
+ * 프로젝트 이름을 정의합니다.
+ */
+rootProject.name = 'happyandnavi_back'

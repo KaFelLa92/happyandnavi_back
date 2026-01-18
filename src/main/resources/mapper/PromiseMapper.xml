@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+=========================================
+PromiseMapper XML
+=========================================
+
+약속일기/일정(Promise) 테이블에 대한 SQL 쿼리를 정의합니다.
+-->
+<mapper namespace="com.happyandnavi.mapper.PromiseMapper">
+
+    <!--
+    ========================================
+    ResultMap 정의
+    ========================================
+    -->
+    <resultMap id="PromiseResultMap" type="com.happyandnavi.domain.Promise">
+        <id property="promiseId" column="promise_id"/>
+        <result property="promiseTitle" column="promise_title"/>
+        <result property="promiseIconPath" column="promise_icon_path"/>
+        <result property="promiseColor" column="promise_color"/>
+        <result property="promiseComment" column="promise_comment"/>
+        <result property="promiseStart" column="promise_start"/>
+        <result property="promiseEnd" column="promise_end"/>
+        <result property="reminderMinutes" column="reminder_minutes"/>
+        <result property="repeatType" column="repeat_type"/>
+        <result property="allDay" column="all_day"/>
+        <result property="userId" column="user_id"/>
+        <result property="status" column="status"/>
+        <result property="regDate" column="reg_date"/>
+        <result property="modDate" column="mod_date"/>
+    </resultMap>
+
+    <!--
+    ========================================
+    SQL 조각 정의
+    ========================================
+    -->
+    <sql id="baseColumns">
+        promise_id, promise_title, promise_icon_path, promise_color,
+        promise_comment, promise_start, promise_end, reminder_minutes,
+        repeat_type, all_day, user_id, status, reg_date, mod_date
+    </sql>
+    
+    <sql id="activeCondition">
+        status = 1
+    </sql>
+
+    <!--
+    ========================================
+    CREATE (등록)
+    ========================================
+    -->
+    <insert id="insert" parameterType="com.happyandnavi.domain.Promise"
+            useGeneratedKeys="true" keyProperty="promiseId">
+        INSERT INTO promise (
+            promise_title,
+            promise_icon_path,
+            promise_color,
+            promise_comment,
+            promise_start,
+            promise_end,
+            reminder_minutes,
+            repeat_type,
+            all_day,
+            user_id,
+            status
+        ) VALUES (
+            #{promiseTitle},
+            #{promiseIconPath},
+            #{promiseColor},
+            #{promiseComment},
+            #{promiseStart},
+            #{promiseEnd},
+            #{reminderMinutes},
+            #{repeatType},
+            #{allDay},
+            #{userId},
+            #{status}
+        )
+    </insert>
+
+    <!--
+    ========================================
+    READ (조회)
+    ========================================
+    -->
+    
+    <!-- ID로 조회 -->
+    <select id="findById" resultMap="PromiseResultMap">
+        SELECT <include refid="baseColumns"/>
+        FROM promise
+        WHERE promise_id = #{promiseId}
+          AND <include refid="activeCondition"/>
+    </select>
+    
+    <!-- 사용자의 모든 일정 조회 (시작일 기준 정렬) -->
+    <select id="findAllByUserId" resultMap="PromiseResultMap">
+        SELECT <include refid="baseColumns"/>
+        FROM promise
+        WHERE user_id = #{userId}
+          AND <include refid="activeCondition"/>
+        ORDER BY promise_start ASC
+    </select>
+    
+    <!-- 연월 기준 조회 (캘린더용) -->
+    <select id="findByUserIdAndYearMonth" resultMap="PromiseResultMap">
+        SELECT <include refid="baseColumns"/>
+        FROM promise
+        WHERE user_id = #{userId}
+          AND (
+            <!-- 시작일이 해당 월에 속하거나 -->
+            (YEAR(promise_start) = #{year} AND MONTH(promise_start) = #{month})
+            OR
+            <!-- 종료일이 해당 월에 속하거나 -->
+            (promise_end IS NOT NULL AND YEAR(promise_end) = #{year} AND MONTH(promise_end) = #{month})
+            OR
+            <!-- 해당 월이 시작일과 종료일 사이에 있는 경우 -->
+            (promise_start &lt; DATE(CONCAT(#{year}, '-', #{month}, '-01'))
+             AND promise_end >= DATE(CONCAT(#{year}, '-', #{month}, '-01')))
+          )
+          AND <include refid="activeCondition"/>
+        ORDER BY promise_start ASC
+    </select>
+    
+    <!-- 기간 기준 조회 -->
+    <select id="findByUserIdAndDateRange" resultMap="PromiseResultMap">
+        SELECT <include refid="baseColumns"/>
+        FROM promise
+        WHERE user_id = #{userId}
+          AND (
+            (promise_start BETWEEN #{startDate} AND #{endDate})
+            OR
+            (promise_end IS NOT NULL AND promise_end BETWEEN #{startDate} AND #{endDate})
+            OR
+            (promise_start &lt;= #{startDate} AND (promise_end IS NULL OR promise_end >= #{endDate}))
+          )
+          AND <include refid="activeCondition"/>
+        ORDER BY promise_start ASC
+    </select>
+    
+    <!-- 오늘 일정 조회 -->
+    <select id="findTodayByUserId" resultMap="PromiseResultMap">
+        SELECT <include refid="baseColumns"/>
+        FROM promise
+        WHERE user_id = #{userId}
+          AND (
+            DATE(promise_start) = CURDATE()
+            OR
+            (DATE(promise_start) &lt;= CURDATE() AND (promise_end IS NULL OR DATE(promise_end) >= CURDATE()))
+          )
+          AND <include refid="activeCondition"/>
+        ORDER BY promise_start ASC
+    </select>
+    
+    <!-- 다가오는 일정 조회 -->
+    <select id="findUpcomingByUserId" resultMap="PromiseResultMap">
+        SELECT <include refid="baseColumns"/>
+        FROM promise
+        WHERE user_id = #{userId}
+          AND promise_start >= NOW()
+          AND <include refid="activeCondition"/>
+        ORDER BY promise_start ASC
+        LIMIT #{limit}
+    </select>
+    
+    <!-- 알림 대상 일정 조회 -->
+    <select id="findForReminder" resultMap="PromiseResultMap">
+        SELECT p.*
+        FROM promise p
+        JOIN users u ON p.user_id = u.user_id
+        WHERE p.status = 1
+          AND u.schedule_set = 1
+          AND p.reminder_minutes IS NOT NULL
+          AND p.promise_start IS NOT NULL
+          AND DATE_SUB(p.promise_start, INTERVAL p.reminder_minutes MINUTE) &lt;= #{currentTime}
+          AND p.promise_start > #{currentTime}
+        ORDER BY p.promise_start ASC
+    </select>
+    
+    <!-- 총 개수 조회 -->
+    <select id="countByUserId" resultType="long">
+        SELECT COUNT(*)
+        FROM promise
+        WHERE user_id = #{userId}
+          AND <include refid="activeCondition"/>
+    </select>
+    
+    <!-- 제목 검색 -->
+    <select id="searchByTitle" resultMap="PromiseResultMap">
+        SELECT <include refid="baseColumns"/>
+        FROM promise
+        WHERE user_id = #{userId}
+          AND promise_title LIKE CONCAT('%', #{keyword}, '%')
+          AND <include refid="activeCondition"/>
+        ORDER BY promise_start DESC
+    </select>
+
+    <!--
+    ========================================
+    UPDATE (수정)
+    ========================================
+    -->
+    <update id="update" parameterType="com.happyandnavi.domain.Promise">
+        UPDATE promise
+        <set>
+            <if test="promiseTitle != null">promise_title = #{promiseTitle},</if>
+            <if test="promiseIconPath != null">promise_icon_path = #{promiseIconPath},</if>
+            <if test="promiseColor != null">promise_color = #{promiseColor},</if>
+            <if test="promiseComment != null">promise_comment = #{promiseComment},</if>
+            <if test="promiseStart != null">promise_start = #{promiseStart},</if>
+            <if test="promiseEnd != null">promise_end = #{promiseEnd},</if>
+            <if test="reminderMinutes != null">reminder_minutes = #{reminderMinutes},</if>
+            <if test="repeatType != null">repeat_type = #{repeatType},</if>
+            <if test="allDay != null">all_day = #{allDay},</if>
+        </set>
+        WHERE promise_id = #{promiseId}
+          AND <include refid="activeCondition"/>
+    </update>
+
+    <!--
+    ========================================
+    DELETE (삭제)
+    ========================================
+    -->
+    <update id="deleteById">
+        UPDATE promise
+        SET status = 0
+        WHERE promise_id = #{promiseId}
+    </update>
+    
+    <update id="deleteAllByUserId">
+        UPDATE promise
+        SET status = 0
+        WHERE user_id = #{userId}
+    </update>
+
+</mapper>
