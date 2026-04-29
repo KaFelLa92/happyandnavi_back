@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 /**
  * =========================================
- * SocialAuthController 클래스
+ * thController 클래스
  * =========================================
  * 
  * 소셜 로그인 (카카오, 구글) API 엔드포인트를 제공합니다.
