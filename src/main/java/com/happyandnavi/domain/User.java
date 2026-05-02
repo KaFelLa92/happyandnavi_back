@@ -60,7 +60,13 @@ public class User {
      * 반려동물 이름 (프로필에 표시될 이름)
      * NOT NULL
      */
-    private String userName;
+    private String petName;
+
+    /**
+     * 반려동물 프로필 사진 경로
+     * NULL 가능, FileUploadUtil로 저장된 경로
+     */
+    private String petPhotoPath;
     
     // ========================================
     // 설정 필드

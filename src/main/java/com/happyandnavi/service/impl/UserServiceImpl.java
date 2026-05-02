@@ -5,12 +5,15 @@ import com.happyandnavi.dto.user.*;
 import com.happyandnavi.exception.BusinessException;
 import com.happyandnavi.mapper.UserMapper;
 import com.happyandnavi.service.UserService;
+import com.happyandnavi.util.FileUploadUtil;
 import com.happyandnavi.util.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Optional;
 
@@ -51,6 +54,11 @@ public class UserServiceImpl implements UserService {
      * JWT 토큰 생성/검증 유틸리티
      */
     private final JwtTokenProvider jwtTokenProvider;
+
+    @Value("${app.base-url}")
+    private String baseUrl;
+
+    private final FileUploadUtil fileUploadUtil;
     
     // ========================================
     // 회원가입 관련 메서드
@@ -85,7 +93,7 @@ public class UserServiceImpl implements UserService {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))  // BCrypt 암호화
                 .phone(normalizePhone(request.getPhone()))  // 전화번호 정규화
-                .userName(request.getUserName())
+                .petName(request.getPetName())
                 .signupType(1)  // 일반 회원가입
                 .role("ROLE_USER")
                 .build();
@@ -95,7 +103,7 @@ public class UserServiceImpl implements UserService {
         log.info("회원가입 성공: userId={}, email={}", user.getUserId(), user.getEmail());
         
         // 5. 응답 DTO로 변환하여 반환
-        return UserResponse.fromEntity(user);
+        return UserResponse.fromEntity(user, baseUrl);
     }
     
     // ========================================
@@ -142,7 +150,7 @@ public class UserServiceImpl implements UserService {
                 .refreshToken(refreshToken)
                 .expiresIn(jwtTokenProvider.getAccessTokenValidity() / 1000)  // 초 단위로 변환
                 .userId(user.getUserId())
-                .userName(user.getUserName())
+                .petName(user.getPetName())
                 .email(user.getEmail())
                 .build();
     }
@@ -171,7 +179,7 @@ public class UserServiceImpl implements UserService {
                     .email(email)
                     .socialId(socialId)
                     .signupType(signupType)
-                    .userName("반려동물")  // 기본값, 이후 수정 가능
+                    .petName("반려동물")  // 기본값, 이후 수정 가능
                     .role("ROLE_USER")
                     .build();
             
@@ -191,7 +199,7 @@ public class UserServiceImpl implements UserService {
                 .refreshToken(refreshToken)
                 .expiresIn(jwtTokenProvider.getAccessTokenValidity() / 1000)
                 .userId(user.getUserId())
-                .userName(user.getUserName())
+                .petName(user.getPetName())
                 .email(user.getEmail())
                 .build();
     }
@@ -234,7 +242,7 @@ public class UserServiceImpl implements UserService {
                 .refreshToken(newRefreshToken)
                 .expiresIn(jwtTokenProvider.getAccessTokenValidity() / 1000)
                 .userId(user.getUserId())
-                .userName(user.getUserName())
+                .petName(user.getPetName())
                 .email(user.getEmail())
                 .build();
     }
@@ -258,7 +266,7 @@ public class UserServiceImpl implements UserService {
     public UserResponse getUserById(Long userId) {
         User user = userMapper.findById(userId)
                 .orElseThrow(() -> new BusinessException("사용자를 찾을 수 없습니다.", 404));
-        return UserResponse.fromEntity(user);
+        return UserResponse.fromEntity(user, baseUrl);
     }
     
     @Override
@@ -289,18 +297,18 @@ public class UserServiceImpl implements UserService {
     
     @Override
     @Transactional
-    public UserResponse updateUser(Long userId, String userName, String phone) {
+    public UserResponse updateUser(Long userId, String petName, String phone) {
         User user = userMapper.findById(userId)
                 .orElseThrow(() -> new BusinessException("사용자를 찾을 수 없습니다.", 404));
         
         // 변경할 정보 설정
-        user.setUserName(userName);
+        user.setPetName(petName);
         user.setPhone(normalizePhone(phone));
         
         userMapper.update(user);
         log.info("사용자 정보 수정: userId={}", userId);
         
-        return UserResponse.fromEntity(user);
+        return UserResponse.fromEntity(user, baseUrl);
     }
     
     @Override
@@ -325,6 +333,31 @@ public class UserServiceImpl implements UserService {
         userMapper.updateScheduleSet(userId, scheduleSet);
         log.info("알림 설정 변경: userId={}, scheduleSet={}", userId, scheduleSet);
     }
+
+    @Override
+    @Transactional
+    public UserResponse uploadPetPhoto(Long userId, MultipartFile image) {
+        // 1. 사용자 조회
+        User user = userMapper.findById(userId)
+                .orElseThrow(() -> new BusinessException("사용자를 찾을 수 없습니다.", 404));
+
+        // 2. 기존 프로필 사진이 있다면 서버에서 삭제 (용량 절약)
+        if (user.getPetPhotoPath() != null) {
+            fileUploadUtil.deleteFile(user.getPetPhotoPath());
+        }
+
+        // 3. 새 이미지 업로드 및 경로 획득
+        String savedPath = fileUploadUtil.uploadProfileImage(userId, image);
+
+        // 4. 사용자 DB 업데이트
+        user.setPetPhotoPath(savedPath);
+        userMapper.update(user);
+
+        log.info("반려동물 프로필 사진 업데이트 완료: userId={}, path={}", userId, savedPath);
+
+        // 5. 응답 반환
+        return UserResponse.fromEntity(user, baseUrl);
+    }
     
     // ========================================
     // 삭제 관련 메서드
@@ -335,14 +368,14 @@ public class UserServiceImpl implements UserService {
     public void deleteUser(Long userId, String password) {
         User user = userMapper.findById(userId)
                 .orElseThrow(() -> new BusinessException("사용자를 찾을 수 없습니다.", 404));
-        
+
         // 일반 회원의 경우 비밀번호 확인 (소셜 로그인은 비밀번호 없음)
         if (user.getSignupType() == 1) {
             if (!passwordEncoder.matches(password, user.getPassword())) {
                 throw new BusinessException("비밀번호가 올바르지 않습니다.", 400);
             }
         }
-        
+
         // 논리적 삭제 (status = 0)
         userMapper.deleteById(userId);
         log.info("회원 탈퇴: userId={}", userId);

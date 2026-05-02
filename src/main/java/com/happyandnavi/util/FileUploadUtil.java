@@ -185,4 +185,34 @@ public class FileUploadUtil {
             throw new BusinessException("파일 저장에 실패했습니다.", 500, e);
         }
     }
+
+    /**
+     * 반려동물 프로필 사진 업로드
+     *
+     * @param userId 사용자 ID
+     * @param file 업로드할 파일
+     * @return 저장된 파일의 상대 경로
+     */
+    public String uploadProfileImage(Long userId, MultipartFile file) {
+        // 1. 파일 유효성 검증
+        validateImageFile(file);
+
+        // 2. 프로필 전용 저장 경로 생성 (basePath/profile/userId/)
+        String uploadDir = String.format("%s/profile/%d", basePath, userId);
+        createDirectoryIfNotExists(uploadDir);
+
+        // 3. 고유한 파일명 생성 (profile_랜덤.확장자)
+        String extension = getFileExtension(file.getOriginalFilename());
+        String newFilename = "profile_" + UUID.randomUUID().toString() + "." + extension;
+
+        // 4. 파일 저장
+        String fullPath = uploadDir + "/" + newFilename;
+        saveFile(file, fullPath);
+
+        // 5. 상대 경로 반환
+        String relativePath = String.format("/profile/%d/%s", userId, newFilename);
+        log.info("프로필 사진 업로드 완료: {}", relativePath);
+
+        return relativePath;
+    }
 }

@@ -60,7 +60,7 @@ public class LoginResponse {
      * 반려동물 이름 (프로필명)
      * 로그인 후 환영 메시지 등에 사용
      */
-    private String userName;
+    private String petName;
     
     /**
      * 사용자 이메일

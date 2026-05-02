@@ -2,6 +2,7 @@ package com.happyandnavi.service;
 
 import com.happyandnavi.domain.User;
 import com.happyandnavi.dto.user.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Optional;
 
@@ -121,4 +122,13 @@ public interface UserService {
      * @param password 비밀번호 확인
      */
     void deleteUser(Long userId, String password);
+
+    /**
+     * 반려동물 프로필 사진 업로드
+     *
+     * @param userId 사용자 ID
+     * @param image 업로드할 이미지 파일
+     * @return 업데이트된 사용자 정보
+     */
+    UserResponse uploadPetPhoto(Long userId, MultipartFile image);
 }

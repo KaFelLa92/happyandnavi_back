@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * =========================================
@@ -63,9 +64,23 @@ public class UserController {
             @RequestBody UpdateUserRequest request) {
         log.info("내 정보 수정: userId={}", userId);
         
-        UserResponse response = userService.updateUser(userId, request.getUserName(), request.getPhone());
+        UserResponse response = userService.updateUser(userId, request.getPetName(), request.getPhone());
         
         return ResponseEntity.ok(ApiResponse.success(response, "정보가 수정되었습니다."));
+    }
+
+    /**
+     * 반려동물 프로필 사진 업로드 API
+     */
+    @PutMapping("/me/pet-photo")
+    public ResponseEntity<ApiResponse<UserResponse>> uploadPetPhoto(
+            @AuthenticationPrincipal Long userId,
+            @RequestParam("image") MultipartFile image) {
+        log.info("반려동물 사진 업로드 요청: userId={}", userId);
+
+        UserResponse response = userService.uploadPetPhoto(userId, image);
+
+        return ResponseEntity.ok(ApiResponse.success(response, "사진이 업데이트 되었습니다."));
     }
     
     /**
@@ -129,7 +144,7 @@ public class UserController {
     @lombok.Getter
     @lombok.Setter
     public static class UpdateUserRequest {
-        private String userName;
+        private String petName;
         private String phone;
     }
     

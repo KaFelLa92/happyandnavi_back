@@ -26,7 +26,8 @@ namespace: 이 매퍼와 연결될 Java 인터페이스의 전체 경로
         <result property="email" column="email"/>
         <result property="password" column="password"/>
         <result property="phone" column="phone"/>
-        <result property="userName" column="user_name"/>
+        <result property="petName" column="pet_name"/>
+        <result property="petPhotoPath" column="pet_photo_path"/>
         <result property="scheduleSet" column="schedule_set"/>
         <result property="signupType" column="signup_type"/>
         <result property="role" column="role"/>
@@ -45,7 +46,7 @@ namespace: 이 매퍼와 연결될 Java 인터페이스의 전체 경로
     
     <!-- 기본 SELECT 컬럼 목록 -->
     <sql id="baseColumns">
-        user_id, email, password, phone, user_name,
+        user_id, email, password, phone, pet_name, pet_photo_path,
         schedule_set, signup_type, role, social_id, refresh_token,
         status, reg_date, mod_date
     </sql>
@@ -72,7 +73,8 @@ namespace: 이 매퍼와 연결될 Java 인터페이스의 전체 경로
             email,
             password,
             phone,
-            user_name,
+            pet_name,
+            pet_photo_path,
             schedule_set,
             signup_type,
             role,
@@ -83,7 +85,8 @@ namespace: 이 매퍼와 연결될 Java 인터페이스의 전체 경로
             #{email},
             #{password},
             #{phone},
-            #{userName},
+            #{petName},
+            #{petPhotoPath},
             #{scheduleSet},
             #{signupType},
             #{role},
@@ -164,7 +167,8 @@ namespace: 이 매퍼와 연결될 Java 인터페이스의 전체 경로
             <!-- null이 아닌 필드만 업데이트 -->
             <if test="email != null">email = #{email},</if>
             <if test="phone != null">phone = #{phone},</if>
-            <if test="userName != null">user_name = #{userName},</if>
+            <if test="petName != null">pet_name = #{petName},</if>
+            <if test="petPhotoPath != null">pet_photo_path = #{petPhotoPath},</if>
             <if test="scheduleSet != null">schedule_set = #{scheduleSet},</if>
             <if test="role != null">role = #{role},</if>
         </set>

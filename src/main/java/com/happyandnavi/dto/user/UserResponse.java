@@ -37,7 +37,12 @@ public class UserResponse {
     /**
      * 반려동물 이름 (프로필명)
      */
-    private String userName;
+    private String petName;
+
+    /**
+     * 반려동물 프로필 사진 (NULL 가능)
+     */
+    private String petPhotoUrl;
     
     /**
      * 일정 알림 설정
@@ -68,25 +73,23 @@ public class UserResponse {
      * @param user User 엔티티
      * @return UserResponse DTO
      */
-    public static UserResponse fromEntity(User user) {
+    public static UserResponse fromEntity(User user, String baseUrl) {
         // 가입 방법을 문자열로 변환
-        String signupTypeText;
-        switch (user.getSignupType()) {
-            case 2:
-                signupTypeText = "카카오";
-                break;
-            case 3:
-                signupTypeText = "구글";
-                break;
-            default:
-                signupTypeText = "일반";
-        }
-        
+        String signupTypeText = switch (user.getSignupType()) {
+            case 2 -> "카카오";
+            case 3 -> "구글";
+            case 4 -> "네이버";
+            case 5 -> "애플";
+            default -> "일반";
+        };
+
         return UserResponse.builder()
                 .userId(user.getUserId())
                 .email(user.getEmail())
                 .phone(user.getPhone())
-                .userName(user.getUserName())
+                .petName(user.getPetName())
+                .petPhotoUrl(user.getPetPhotoPath() != null
+                        ? baseUrl + user.getPetPhotoPath() : null)
                 .scheduleSet(user.getScheduleSet())
                 .signupType(user.getSignupType())
                 .signupTypeText(signupTypeText)

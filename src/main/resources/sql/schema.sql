@@ -20,7 +20,8 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(40) NOT NULL COMMENT '이메일 (로그인 ID)',
     password VARCHAR(255) COMMENT '비밀번호 (BCrypt 암호화)',
     phone VARCHAR(15) COMMENT '연락처',
-    user_name VARCHAR(30) NOT NULL COMMENT '반려동물 이름',
+    pet_name VARCHAR(30) NOT NULL COMMENT '반려동물 이름',
+    pet_photo_path TEXT DEFAULT NULL COMMENT '반려동물 프로필 사진 경로',
     
     -- 설정
     schedule_set INT NOT NULL DEFAULT 1 COMMENT '일정 알림 설정 (1: 켜짐, 0: 꺼짐)',
