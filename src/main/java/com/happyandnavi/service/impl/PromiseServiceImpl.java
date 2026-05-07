@@ -114,6 +114,7 @@ public class PromiseServiceImpl implements PromiseService {
         if (request.getPromiseTitle() != null) promise.setPromiseTitle(request.getPromiseTitle());
         if (request.getPromiseIconPath() != null) promise.setPromiseIconPath(request.getPromiseIconPath());
         if (request.getPromiseColor() != null) promise.setPromiseColor(request.getPromiseColor());
+        if (request.getPromiseCategory() != null) promise.setPromiseCategory(request.getPromiseCategory());
         if (request.getPromiseComment() != null) promise.setPromiseComment(request.getPromiseComment());
         if (request.getPromiseStart() != null) promise.setPromiseStart(request.getPromiseStart());
         if (request.getPromiseEnd() != null) promise.setPromiseEnd(request.getPromiseEnd());

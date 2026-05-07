@@ -44,6 +44,11 @@ public class PromiseDto {
          * 일정 색상 (선택, 기본값: yellow)
          */
         private String promiseColor;
+
+        /**
+         * 일정 카테고리 (Category enum name 저장)
+         */
+        private String promiseCategory;
         
         /**
          * 일정 메모/코멘트 (선택)
@@ -92,6 +97,7 @@ public class PromiseDto {
                     .promiseTitle(this.promiseTitle)
                     .promiseIconPath(this.promiseIconPath)
                     .promiseColor(this.promiseColor != null ? this.promiseColor : "yellow")
+                    .promiseCategory(this.promiseCategory)
                     .promiseComment(this.promiseComment)
                     .promiseStart(this.promiseStart)
                     .promiseEnd(this.promiseEnd)
@@ -130,6 +136,11 @@ public class PromiseDto {
          * 일정 색상
          */
         private String promiseColor;
+
+        /**
+         * 일정 카테고리 (Promise.Category enum name)
+         */
+        private String promiseCategory;
         
         /**
          * 일정 메모
@@ -197,6 +208,21 @@ public class PromiseDto {
          * 일정 색상
          */
         private String promiseColor;
+
+        /**
+         * 일정 카테고리 enum name
+         */
+        private String promiseCategory;
+
+        /**
+         * 일정 카테고리 한국어 이름 (예: "예방접종")
+         */
+        private String categoryName;
+
+        /**
+         * 일정 카테고리 이모지 (예: "💉")
+         */
+        private String categoryEmoji;
         
         /**
          * 일정 메모
@@ -279,12 +305,22 @@ public class PromiseDto {
                     reminderText = (minutes / 1440) + "일 전";
                 }
             }
+
+            // 카테고리 정보
+            String categoryName = "", categoryEmoji = "";
+            if (promise.getPromiseCategory() != null) {
+                Promise.Category cat = Promise.Category.fromName(promise.getPromiseCategory());
+                if (cat != null) { categoryName = cat.getName(); categoryEmoji = cat.getEmoji(); }
+            }
             
             return Response.builder()
                     .promiseId(promise.getPromiseId())
                     .promiseTitle(promise.getPromiseTitle())
                     .promiseIconPath(promise.getPromiseIconPath())
                     .promiseColor(promise.getPromiseColor())
+                    .promiseCategory(promise.getPromiseCategory())
+                    .categoryName(categoryName)
+                    .categoryEmoji(categoryEmoji)
                     .promiseComment(promise.getPromiseComment())
                     .promiseStart(promise.getPromiseStart())
                     .promiseEnd(promise.getPromiseEnd())
@@ -328,6 +364,11 @@ public class PromiseDto {
          * 일정 색상
          */
         private String promiseColor;
+
+        /**
+         * 일정 카테고리 이모지 (캘린더 바에 표시)
+         */
+        private String categoryEmoji;
         
         /**
          * 시작 시간
@@ -351,10 +392,17 @@ public class PromiseDto {
          * @return CalendarItem DTO
          */
         public static CalendarItem fromEntity(Promise promise) {
+            // 카테고리 이모지 정보
+            String categoryEmoji = "";
+            if (promise.getPromiseCategory() != null) {
+                Promise.Category cat = Promise.Category.fromName(promise.getPromiseCategory());
+                if (cat != null) categoryEmoji = cat.getEmoji();
+            }
             return CalendarItem.builder()
                     .promiseId(promise.getPromiseId())
                     .promiseTitle(promise.getPromiseTitle())
                     .promiseColor(promise.getPromiseColor())
+                    .categoryEmoji(categoryEmoji)
                     .promiseStart(promise.getPromiseStart())
                     .promiseEnd(promise.getPromiseEnd())
                     .allDay(promise.getAllDay())

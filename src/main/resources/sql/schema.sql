@@ -78,13 +78,14 @@ CREATE TABLE IF NOT EXISTS memory (
 -- 3. Promise 테이블 (일정/약속일기)
 -- ============================================
 CREATE TABLE IF NOT EXISTS promise (
-    -- PK: 일정 고유 번호
+    -- PK: 일정 고유 번
     promise_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     
     -- 일정 정보
     promise_title VARCHAR(100) NOT NULL COMMENT '일정 제목',
     promise_icon_path TEXT COMMENT '아이콘 경로',
     promise_color VARCHAR(100) NOT NULL DEFAULT 'yellow' COMMENT '일정 색상',
+    promise_category VARCHAR(30) DEFAULT NULL COMMENT '카테고리 (VACCINATION/CHECKUP/GROOMING/WALK/FOOD/SNACK/NAIL/SURGERY/OTHER)',
     promise_comment TEXT COMMENT '메모',
     promise_start DATETIME COMMENT '시작 시간',
     promise_end DATETIME COMMENT '종료 시간',

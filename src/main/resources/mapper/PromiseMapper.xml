@@ -21,6 +21,7 @@ PromiseMapper XML
         <result property="promiseTitle" column="promise_title"/>
         <result property="promiseIconPath" column="promise_icon_path"/>
         <result property="promiseColor" column="promise_color"/>
+        <result property="promiseCategory" column="promise_category"/>
         <result property="promiseComment" column="promise_comment"/>
         <result property="promiseStart" column="promise_start"/>
         <result property="promiseEnd" column="promise_end"/>
@@ -39,7 +40,7 @@ PromiseMapper XML
     ========================================
     -->
     <sql id="baseColumns">
-        promise_id, promise_title, promise_icon_path, promise_color,
+        promise_id, promise_title, promise_icon_path, promise_color, promise_category,
         promise_comment, promise_start, promise_end, reminder_minutes,
         repeat_type, all_day, user_id, status, reg_date, mod_date
     </sql>
@@ -59,6 +60,7 @@ PromiseMapper XML
             promise_title,
             promise_icon_path,
             promise_color,
+            promise_category,
             promise_comment,
             promise_start,
             promise_end,
@@ -71,6 +73,7 @@ PromiseMapper XML
             #{promiseTitle},
             #{promiseIconPath},
             #{promiseColor},
+            #{promiseCategory},
             #{promiseComment},
             #{promiseStart},
             #{promiseEnd},
@@ -209,6 +212,7 @@ PromiseMapper XML
             <if test="promiseTitle != null">promise_title = #{promiseTitle},</if>
             <if test="promiseIconPath != null">promise_icon_path = #{promiseIconPath},</if>
             <if test="promiseColor != null">promise_color = #{promiseColor},</if>
+            <if test="promiseCategory != null">promise_category = #{promiseCategory},</if>
             <if test="promiseComment != null">promise_comment = #{promiseComment},</if>
             <if test="promiseStart != null">promise_start = #{promiseStart},</if>
             <if test="promiseEnd != null">promise_end = #{promiseEnd},</if>

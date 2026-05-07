@@ -277,7 +277,7 @@ public class MemoryDto {
                     .memoryId(memory.getMemoryId())
                     .memoryDate(memory.getMemoryDate())
                     .memoryPath(memory.getMemoryPath())
-                    .memoryUrl(baseUrl + memory.getMemoryPath())
+                    .memoryUrl(baseUrl + "/uploads" + memory.getMemoryPath())
                     .memoryComment(memory.getMemoryComment())
                     .memoryWeather(memory.getMemoryWeather())
                     .weatherText(weatherText)
@@ -346,7 +346,7 @@ public class MemoryDto {
                     .memoryId(memory.getMemoryId())
                     .memoryDate(memory.getMemoryDate())
                     .day(memory.getMemoryDate().getDayOfMonth())
-                    .thumbnailUrl(baseUrl + memory.getMemoryPath())
+                    .thumbnailUrl(baseUrl + "/uploads" + memory.getMemoryPath())
                     .hasMemory(true)
                     .build();
         }

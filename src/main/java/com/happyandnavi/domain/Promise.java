@@ -68,6 +68,12 @@ public class Promise {
      */
     @Builder.Default
     private String promiseColor = "yellow";
+
+    /**
+     * 약속 카테고리 (Category enum name 저장)
+     * 예: "VACCINATION", "WALK", "OTHER"
+     */
+    private String promiseCategory;
     
     /**
      * 약속 코멘트/메모
@@ -219,19 +225,22 @@ public class Promise {
         NAIL("손발톱 관리", "✨", "purple"),
         SURGERY("수술", "🔬", "red"),
         OTHER("기타", "📌", "gray");
-        
+
         private final String name;
         private final String emoji;
         private final String defaultColor;
-        
+
         Category(String name, String emoji, String defaultColor) {
-            this.name = name;
-            this.emoji = emoji;
-            this.defaultColor = defaultColor;
+            this.name = name; this.emoji = emoji; this.defaultColor = defaultColor;
         }
-        
         public String getName() { return name; }
         public String getEmoji() { return emoji; }
         public String getDefaultColor() { return defaultColor; }
+
+        public static Category fromName(String name) {
+            if (name == null) return null;
+            try { return valueOf(name); } catch (IllegalArgumentException e) { return null; }
+        }
     }
 }
+
