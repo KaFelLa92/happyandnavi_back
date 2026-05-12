@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -99,7 +100,7 @@ public class AuthController {
      * @return 성공 메시지
      */
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<Void>> logout(@RequestParam Long userId) {
+    public ResponseEntity<ApiResponse<Void>> logout(@AuthenticationPrincipal Long userId) {
         log.info("로그아웃 요청: userId={}", userId);
         
         userService.logout(userId);

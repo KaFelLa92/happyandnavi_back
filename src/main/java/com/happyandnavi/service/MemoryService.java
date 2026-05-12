@@ -78,10 +78,9 @@ public interface MemoryService {
      * @param memoryId 추억일기 ID
      * @param userId 요청 사용자 ID
      * @param request 수정 요청 데이터
-     * @param image 새 이미지 파일 (선택)
      * @return 수정된 추억일기 정보
      */
-    MemoryDto.Response updateMemory(Long memoryId, Long userId, MemoryDto.UpdateRequest request, MultipartFile image);
+    MemoryDto.Response updateMemory(Long memoryId, Long userId, MemoryDto.UpdateRequest request);
     
     /**
      * 추억일기 삭제

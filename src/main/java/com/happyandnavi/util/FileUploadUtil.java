@@ -41,43 +41,95 @@ public class FileUploadUtil {
     private static final List<String> ALLOWED_IMAGE_EXTENSIONS = Arrays.asList(
             "jpg", "jpeg", "png", "gif", "webp"
     );
-    
+
+    /** 허용 동영상 확장자 */
+    private static final List<String> ALLOWED_VIDEO_EXTENSIONS = Arrays.asList(
+            "mp4", "mov", "avi", "webm", "mkv"
+    );
+
+    /** 이미지 + 동영상 통합 */
+    private static final List<String> ALLOWED_MEDIA_EXTENSIONS;
+    static {
+        ALLOWED_MEDIA_EXTENSIONS = new java.util.ArrayList<>();
+        ALLOWED_MEDIA_EXTENSIONS.addAll(ALLOWED_IMAGE_EXTENSIONS);
+        ALLOWED_MEDIA_EXTENSIONS.addAll(ALLOWED_VIDEO_EXTENSIONS);
+    }
+
+    /** 최대 파일 크기: 200MB (동영상 고려) */
+    private static final long MAX_FILE_SIZE = 200L * 1024 * 1024;
+
+    /** 이미지 최대 파일 크기: 50MB */
+    private static final long MAX_IMAGE_SIZE = 50L * 1024 * 1024;
+
+    // ============================================
+    // 추억일기 미디어 업로드 (이미지 + 동영상)
+    // ============================================
+
     /**
-     * 최대 파일 크기 (50MB)
-     */
-    private static final long MAX_FILE_SIZE = 50 * 1024 * 1024;
-    
-    /**
-     * 추억일기 이미지 업로드
-     * 
+     * 추억일기 미디어(이미지 또는 동영상) 업로드
+     *
+     * 260508: 동영상(mp4, mov 등) 지원 추가
+     *
      * @param userId 사용자 ID
-     * @param file 업로드할 파일
+     * @param file   업로드할 파일
      * @return 저장된 파일의 상대 경로
      */
-    public String uploadMemoryImage(Long userId, MultipartFile file) {
-        // 파일 유효성 검증
-        validateImageFile(file);
-        
-        // 저장 경로 생성 (basePath/memory/userId/yyyy/MM/)
-        String datePath = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM"));
-        String uploadDir = String.format("%s/memory/%d/%s", basePath, userId, datePath);
-        
-        // 디렉토리 생성
+    public String uploadMemoryMedia(Long userId, MultipartFile file) {
+        validateMediaFile(file);
+
+        String extension  = getFileExtension(file.getOriginalFilename()).toLowerCase();
+        boolean isVideo   = ALLOWED_VIDEO_EXTENSIONS.contains(extension);
+        String subDir     = isVideo ? "memory_video" : "memory";
+
+        // 저장 경로: basePath/{subDir}/{userId}/yyyy/MM/
+        String datePath  = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM"));
+        String uploadDir = String.format("%s/%s/%d/%s", basePath, subDir, userId, datePath);
         createDirectoryIfNotExists(uploadDir);
-        
-        // 고유한 파일명 생성
-        String originalFilename = file.getOriginalFilename();
-        String extension = getFileExtension(originalFilename);
+
         String newFilename = UUID.randomUUID().toString() + "." + extension;
-        
-        // 파일 저장
-        String fullPath = uploadDir + "/" + newFilename;
+        String fullPath    = uploadDir + "/" + newFilename;
         saveFile(file, fullPath);
-        
-        // 상대 경로 반환 (URL에서 사용)
-        String relativePath = String.format("/memory/%d/%s/%s", userId, datePath, newFilename);
-        log.info("파일 업로드 완료: {}", relativePath);
-        
+
+        String relativePath = String.format("/%s/%d/%s/%s", subDir, userId, datePath, newFilename);
+        log.info("미디어 업로드 완료: {}", relativePath);
+        return relativePath;
+    }
+
+    /**
+     * 추억일기 이미지 업로드 (하위 호환 유지)
+     *
+     * @deprecated uploadMemoryMedia() 사용을 권장합니다.
+     */
+    @Deprecated
+    public String uploadMemoryImage(Long userId, MultipartFile file) {
+        return uploadMemoryMedia(userId, file);
+    }
+
+    // ============================================
+    // 반려동물 프로필 사진 업로드 (이미지 전용)
+    // ============================================
+
+    /**
+     * 반려동물 프로필 사진 업로드
+     *
+     * @param userId 사용자 ID
+     * @param file   업로드할 이미지 파일
+     * @return 저장된 파일의 상대 경로
+     */
+    public String uploadProfileImage(Long userId, MultipartFile file) {
+        // 프로필은 이미지만 허용
+        validateImageFile(file);
+
+        String uploadDir = String.format("%s/profile/%d", basePath, userId);
+        createDirectoryIfNotExists(uploadDir);
+
+        String extension   = getFileExtension(file.getOriginalFilename());
+        String newFilename = "profile_" + UUID.randomUUID() + "." + extension;
+        String fullPath    = uploadDir + "/" + newFilename;
+        saveFile(file, fullPath);
+
+        String relativePath = String.format("/profile/%d/%s", userId, newFilename);
+        log.info("프로필 사진 업로드 완료: {}", relativePath);
         return relativePath;
     }
     
@@ -102,9 +154,47 @@ public class FileUploadUtil {
             // 삭제 실패해도 예외를 던지지 않음 (로그만 기록)
         }
     }
-    
+
+    // ============================================
+    // 유효성 검증
+    // ============================================
+
     /**
-     * 이미지 파일 유효성 검증
+     * 이미지 + 동영상 통합 검증
+     *
+     * @param file 검증할 파일
+     */
+    private void validateMediaFile(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new BusinessException("파일이 없습니다.", 400);
+        }
+        if (file.getSize() > MAX_FILE_SIZE) {
+            throw new BusinessException("파일 크기가 너무 큽니다. 최대 200MB까지 업로드 가능합니다.", 400);
+        }
+
+        String filename = file.getOriginalFilename();
+        if (filename == null || filename.isEmpty()) {
+            throw new BusinessException("파일명이 없습니다.", 400);
+        }
+
+        String extension = getFileExtension(filename).toLowerCase();
+        if (!ALLOWED_MEDIA_EXTENSIONS.contains(extension)) {
+            throw new BusinessException(
+                    "허용되지 않는 파일 형식입니다. (허용: " + String.join(", ", ALLOWED_MEDIA_EXTENSIONS) + ")",
+                    400
+            );
+        }
+
+        String contentType = file.getContentType();
+        if (contentType == null ||
+                (!contentType.startsWith("image/") && !contentType.startsWith("video/"))) {
+            throw new BusinessException("이미지 또는 동영상 파일만 업로드 가능합니다.", 400);
+        }
+    }
+
+
+    /**
+     * 이미지 파일 전용 유효성 검증 (프로필 등에서 사용)
      * 
      * @param file 검증할 파일
      */
@@ -139,7 +229,11 @@ public class FileUploadUtil {
             throw new BusinessException("이미지 파일만 업로드 가능합니다.", 400);
         }
     }
-    
+
+    // ============================================
+    // 유틸리티
+    // ============================================
+
     /**
      * 파일 확장자 추출
      * 
@@ -186,33 +280,4 @@ public class FileUploadUtil {
         }
     }
 
-    /**
-     * 반려동물 프로필 사진 업로드
-     *
-     * @param userId 사용자 ID
-     * @param file 업로드할 파일
-     * @return 저장된 파일의 상대 경로
-     */
-    public String uploadProfileImage(Long userId, MultipartFile file) {
-        // 1. 파일 유효성 검증
-        validateImageFile(file);
-
-        // 2. 프로필 전용 저장 경로 생성 (basePath/profile/userId/)
-        String uploadDir = String.format("%s/profile/%d", basePath, userId);
-        createDirectoryIfNotExists(uploadDir);
-
-        // 3. 고유한 파일명 생성 (profile_랜덤.확장자)
-        String extension = getFileExtension(file.getOriginalFilename());
-        String newFilename = "profile_" + UUID.randomUUID().toString() + "." + extension;
-
-        // 4. 파일 저장
-        String fullPath = uploadDir + "/" + newFilename;
-        saveFile(file, fullPath);
-
-        // 5. 상대 경로 반환
-        String relativePath = String.format("/profile/%d/%s", userId, newFilename);
-        log.info("프로필 사진 업로드 완료: {}", relativePath);
-
-        return relativePath;
-    }
 }

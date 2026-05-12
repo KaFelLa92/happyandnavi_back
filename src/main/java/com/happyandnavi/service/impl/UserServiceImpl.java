@@ -152,6 +152,7 @@ public class UserServiceImpl implements UserService {
                 .userId(user.getUserId())
                 .petName(user.getPetName())
                 .email(user.getEmail())
+                .petPhotoUrl(user.getPetPhotoPath() != null ? baseUrl + user.getPetPhotoPath() : null)
                 .build();
     }
     
@@ -201,6 +202,7 @@ public class UserServiceImpl implements UserService {
                 .userId(user.getUserId())
                 .petName(user.getPetName())
                 .email(user.getEmail())
+                .petPhotoUrl(user.getPetPhotoPath() != null ? baseUrl + user.getPetPhotoPath() : null)
                 .build();
     }
     
@@ -244,6 +246,7 @@ public class UserServiceImpl implements UserService {
                 .userId(user.getUserId())
                 .petName(user.getPetName())
                 .email(user.getEmail())
+                .petPhotoUrl(user.getPetPhotoPath() != null ? baseUrl + user.getPetPhotoPath() : null)
                 .build();
     }
     

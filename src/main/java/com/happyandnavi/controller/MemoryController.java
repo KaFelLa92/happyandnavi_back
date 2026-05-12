@@ -157,7 +157,7 @@ public class MemoryController {
      * 요청 form 필드 (모두 선택):
      * - memoryDate, memoryComment, memoryWeather, userMood, petMood, image
      */
-    @PutMapping(value = "/{memoryId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PutMapping(value = "/{memoryId}")
     public ResponseEntity<ApiResponse<MemoryDto.Response>> updateMemory(
             @AuthenticationPrincipal Long userId,
             @PathVariable Long memoryId,
@@ -165,8 +165,7 @@ public class MemoryController {
             @RequestParam(value = "memoryComment", required = false) String memoryComment,
             @RequestParam(value = "memoryWeather", required = false) Integer memoryWeather,
             @RequestParam(value = "userMood", required = false) Integer userMood,
-            @RequestParam(value = "petMood", required = false) Integer petMood,
-            @RequestPart(value = "image", required = false) MultipartFile image) {
+            @RequestParam(value = "petMood", required = false) Integer petMood) {
         log.info("추억일기 수정: userId={}, memoryId={}", userId, memoryId);
 
         MemoryDto.UpdateRequest request = MemoryDto.UpdateRequest.builder()
@@ -177,7 +176,7 @@ public class MemoryController {
                 .petMood(petMood)
                 .build();
 
-        MemoryDto.Response response = memoryService.updateMemory(memoryId, userId, request, image);
+        MemoryDto.Response response = memoryService.updateMemory(memoryId, userId, request);
 
         return ResponseEntity.ok(ApiResponse.success(response, "추억이 수정되었습니다."));
     }

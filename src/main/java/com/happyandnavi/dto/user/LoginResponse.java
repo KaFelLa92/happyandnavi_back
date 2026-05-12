@@ -61,7 +61,12 @@ public class LoginResponse {
      * 로그인 후 환영 메시지 등에 사용
      */
     private String petName;
-    
+
+    /**
+     * 반려동물 프로필 사진
+     */
+    private String petPhotoUrl;
+
     /**
      * 사용자 이메일
      */

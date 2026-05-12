@@ -70,7 +70,7 @@ public class MemoryServiceImpl implements MemoryService {
         }
         
         // 파일 업로드 및 경로 반환
-        String imagePath = fileUploadUtil.uploadMemoryImage(userId, image);
+        String imagePath = fileUploadUtil.uploadMemoryMedia(userId, image);
         
         // 3. 엔티티 생성 및 저장
         Memory memory = request.toEntity(userId, imagePath);
@@ -176,7 +176,7 @@ public class MemoryServiceImpl implements MemoryService {
      */
     @Override
     @Transactional
-    public MemoryDto.Response updateMemory(Long memoryId, Long userId, MemoryDto.UpdateRequest request, MultipartFile image) {
+    public MemoryDto.Response updateMemory(Long memoryId, Long userId, MemoryDto.UpdateRequest request) {
         log.info("추억일기 수정: memoryId={}, userId={}", memoryId, userId);
         
         // 기존 추억 조회
@@ -203,16 +203,6 @@ public class MemoryServiceImpl implements MemoryService {
         }
         if (request.getPetMood() != null) {
             memory.setPetMood(request.getPetMood());
-        }
-        
-        // 새 이미지가 있으면 업로드 및 경로 업데이트
-        if (image != null && !image.isEmpty()) {
-            // 기존 이미지 삭제 (선택적)
-            fileUploadUtil.deleteFile(memory.getMemoryPath());
-            
-            // 새 이미지 업로드
-            String newImagePath = fileUploadUtil.uploadMemoryImage(userId, image);
-            memory.setMemoryPath(newImagePath);
         }
         
         // 데이터베이스 업데이트
